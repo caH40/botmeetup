@@ -11,7 +11,8 @@ const getWeatherStart = require('./weather/getweatherstart');
 const getWeather = require('./weather/getweather');
 const logsMessagesChannel = require('./app_modules/logsMessagesChannel');
 const Message = require('./models/Message')
-const Rating = require('./models/Rating')
+const Rating = require('./models/Rating');
+const { stopCoverage } = require('v8');
 
 const bot = new Telegraf(process.env.BOT_TOKEN);
 
@@ -24,15 +25,13 @@ mongoose.connect(process.env.MONGODB)
 		console.log(e)
 	})
 
-var mesIdArr = []; // массив номеров сообщений автора запроса на удаление объявлений
-
 bot.use(session())
-let members // переменная для сохраненния данных сессии
+let members // переменная для сохранения данных сессии
 bot.catch((err, ctx) => {
 	console.log(`Ooops, encountered an error for ${ctx.updateType}`, err)
 })
 // контроль голосования option_ids: [ 0 ] первый ответ
-// не могу найти привязки межуд сообщениев в канале и голосовалкой в группе, пожет при формировании этих сообщений записывать дополнительный идентификатор к этим событиям
+// не могу найти привязки между сообщениями в канале и голосованием в группе, поможет при формировании этих сообщений записывать дополнительный идентификатор к этим событиям
 // bot.on('poll_answer', async ctx => {
 // 	console.log(ctx)
 // 	if (ctx.update.poll_answer.option_ids[0] === 0) {
@@ -52,42 +51,43 @@ bot.help(async (ctx) => {
 	await ctx.reply(text.commands, { parse_mode: 'html', disable_web_page_preview: true })
 });
 // RideOn
-// для последовательного выполения команд надо функцию делать асинхронной с помощью async/await
+// для последовательного выполнения команд надо функцию делать асинхронной с помощью async/await
 bot.command('rideon', async ctx => {
 	try {
-		// обнуление сессии
-		members = {}
-		ctx.session = {}
-		ctx.session.start = [
-			[
-				{ text: 'Дата заезда', callback_data: 'meetDate' },
-				{ text: 'Время старта заезда', callback_data: 'meetTime' }
-			],
-			[
-				{ text: 'Место сбора', callback_data: 'meetLocation' },
-				{ text: 'Дистанция, км', callback_data: 'meetDistance' }
-			],
-			[
-				{ text: 'Средняя скорость', callback_data: 'meetSpeed' },
-				{ text: 'Сложность заезда', callback_data: 'meetLevel' }
-			],
-			[
-				{ text: 'Сводные данные по заезду', callback_data: 'meetSummary' }
+		if (ctx.update.message.from.username) {
+			// обнуление сессии
+			members = {}
+			ctx.session = {}
+			ctx.session.start = [
+				[
+					{ text: 'Дата заезда', callback_data: 'meetDate' },
+					{ text: 'Время старта заезда', callback_data: 'meetTime' }
+				],
+				[
+					{ text: 'Место сбора', callback_data: 'meetLocation' },
+					{ text: 'Дистанция, км', callback_data: 'meetDistance' }
+				],
+				[
+					{ text: 'Средняя скорость', callback_data: 'meetSpeed' },
+					{ text: 'Сложность заезда', callback_data: 'meetLevel' }
+				],
+				[
+					{ text: 'Сводные данные по заезду', callback_data: 'meetSummary' }
+				]
 			]
-		]
-		try {
 			await ctx.deleteMessage(ctx.update.message.message_id).catch(e => creatLogErr(e));
-		} catch (err) {
-			console.error(err);
-		};
-		await ctx.reply('Выберите блок заполнения', { reply_markup: { inline_keyboard: ctx.session.start } });
+			await ctx.reply('Выберите блок заполнения', { reply_markup: { inline_keyboard: ctx.session.start } }).catch(e => creatLogErr(e));
+		}
+		else {
+			await ctx.reply('Пользователи с приватным аккаунтом не могут создавать объявления')
+		}
 	} catch (err) {
 		console.error(err);
 	};
 });
 bot.command('rating', async ctx => {
 	let ratingTextI = `Самые активные организаторы заездов:\n`
-	const contextParse = await Rating.find().sort({ posts: 1 })
+	const contextParse = await Rating.find().sort({ posts: -1 })
 	for (let i = 0; i < contextParse.length; i++) {
 		let ratingText = `${i + 1}. ${contextParse[i].username}-${contextParse[i].posts} 🚴 \n`
 		ratingTextI = ratingTextI + ratingText
@@ -96,7 +96,7 @@ bot.command('rating', async ctx => {
 
 });
 // создание инлайнклавиатуры keymyPosts массива со всеми созданными автором объявления
-// также создается массив из объектов обявлений автора keymyPosts
+// также создается массив из объектов объявлений автора keymyPosts
 bot.command('delete', async ctx => {
 	const regexp = RegExp('@' + ctx.update.message.from.username)
 	const messageFromBd = await Message.find({ "message.text": regexp })
@@ -153,14 +153,14 @@ bot.on('callback_query', async (ctx) => {
 	const meetStr = `<b>Данные о планируемом велозаезде</b>:\n<b>Дата</b>: ${ctx.session.dateM ?? '---'}\n<b>Время</b>: ${ctx.session.timeM ?? '---'}\n<b>Место</b>: ${ctx.session.locationsM ?? '---'}\n<b>Дистанция</b>: ${ctx.session.distanceM ?? '---'} \n<b>Tемп</b>: ${ctx.session.speedM ?? '---'}\n<b>Сложность</b>: ${ctx.session.levelM ?? '---'}\n<b>Организатор заезда</b>: ${ctx.session.creatM}`;
 
 	const cbData = ctx.update.callback_query.data; // callback_data
-	await ctx.deleteMessage(ctx.update.callback_query.message.message_id).catch(e => creatLogErr(e)); // удаление меню инлайнклв после нажатия любой кнопки
+	await ctx.deleteMessage(ctx.update.callback_query.message.message_id).catch(e => creatLogErr(e)); // удаление меню инлайн клавиатуры после нажатия любой кнопки
 	// ctx.answerCbQuery(); // убираем иконку часов с инлайн кнопки, если вставить текст, по выводит в центре эрана телеграм
 	function handleQuery(callbackData, textTitle, keyboard) {
 		if (cbData === callbackData) {
 			ctx.reply(textTitle, { reply_markup: { inline_keyboard: keyboard } });
 		};
 	}
-	// вывод меню с датами
+	// вывод меню с датами выбираем 
 	handleQuery('meetDate', 'Дата запланированного заезда', keys.creatDayKey());
 	// вывод меню время
 	handleQuery('meetTime', 'Время старта', keys.times);
@@ -172,7 +172,7 @@ bot.on('callback_query', async (ctx) => {
 	handleQuery('meetSpeed', 'Средняя скорость заезда, км/ч', keys.speed);
 	// вывод меню сложности
 	handleQuery('meetLevel', 'Уровень сложности заезда', keys.level);
-	// вывод меню своднны данных по заезду, публицация или редактирование
+	// вывод меню сводных данных по заезду, публикация или редактирование
 	if (cbData === 'meetSummary') {
 		await ctx.replyWithHTML(meetStr, { reply_markup: { inline_keyboard: keys.summary } }).catch((e) => console.log(e))
 	};
@@ -181,7 +181,7 @@ bot.on('callback_query', async (ctx) => {
 	if (cbData === 'meetSend') {
 		// проверка заполнения всех полей
 		if (meetStr.includes('---')) {
-			await ctx.reply('Не все поля заполненны!!!', { reply_markup: { inline_keyboard: keys.filled } }).catch((e) => console.log(e));
+			await ctx.reply('Не все поля заполнены!!!', { reply_markup: { inline_keyboard: keys.filled } }).catch((e) => console.log(e));
 		} else {
 			members = ctx.session
 			await ctx.telegram.sendMessage(process.env.CHANNEL_TELEGRAM, meetStr, { parse_mode: 'html', disable_web_page_preview: true }).catch((e) => console.log(e));
@@ -193,7 +193,7 @@ bot.on('callback_query', async (ctx) => {
 			// ctx.session = {};
 		}
 	};
-	// редактировние создаваемего объявления
+	// редактирование создаваемого объявления
 	if (cbData === 'meetEdit') {
 		output()
 	};
@@ -237,19 +237,17 @@ bot.on('callback_query', async (ctx) => {
 		output();
 	};
 	// блок удаления автором ненужных объявлений с канала объявлений
-	// mesIdArr массив с номерами сообщений, принадлежащих автору
 	if (cbData.includes('ffmi')) {
 		const forwardMess = cbData.replace(/ffmi/g, ''); //чистим callback_data от служебных символов ffmi
 		await ctx.telegram.editMessageText(process.env.CHANNEL_TELEGRAM, forwardMess, 'привет!', 'Объявление не актуально! Удалено автором поста.').catch((e) => creatLogErr(e))
 		//база данных ждет forwardMess в формате Number
 		await Message.deleteOne({ "message.forward_from_message_id": +forwardMess }).catch((e) => console.log(e))
-		// postersWrong(fs, forwardMess);
 		await ctx.reply('Ваше объявление удалено!').catch((e) => console.log(e));
 	};
 });
 
 bot.launch();
-//получение даннных о погоде
+//получение данных о погоде
 setInterval(() => {
 	getWeather()
 }, 86400000);
