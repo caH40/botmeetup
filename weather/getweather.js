@@ -1,4 +1,5 @@
-console.log('app working...')
+require('dotenv').config();
+// console.log('app working...')
 const fetch = require('node-fetch');
 const fs = require('fs');
 const cityList = require('./citylistru.json')
@@ -16,9 +17,8 @@ const getWeather = function () {
 		let lon = cityList.filter(obj => obj.name === cityMy[x])[0].coord.lon
 		let lat = cityList.filter(obj => obj.name === cityMy[x])[0].coord.lat
 
-		const requestUrl = `https://api.openweathermap.org/data/2.5/onecall?lat=${lat}&lon=${lon}&appid=2b149698008867fabba93ac5e856e71e&exclude=hourly&units=metric&lang=ru` // first token
-		// const requestUrl = `https://api.openweathermap.org/data/2.5/onecall?lat=${lat}&lon=${lon}&appid=0ab9f04031374506e1d90ffb30e3d937&exclude=hourly&units=metric&lang=ru` //second token
-		// console.log(requestUrl)
+		const requestUrl = `https://api.openweathermap.org/data/2.5/onecall?lat=${lat}&lon=${lon}&appid=${process.env.IDWEATHER}=hourly&units=metric&lang=ru`
+
 		fetch(requestUrl)
 			.then(function (resp) {
 				return resp.json()

@@ -12,4 +12,16 @@ async function creatRating(userName) {
 	}
 }
 
-module.exports = creatRating
+async function createListRating() {
+	let ratingTextI = `Самые активные организаторы заездов:\n`
+	const contextParse = await Rating.find().sort({ posts: -1 })
+	for (let i = 0; i < contextParse.length; i++) {
+		let ratingText = `${i + 1}. ${contextParse[i].username}-${contextParse[i].posts} 🚴 \n`
+		ratingTextI = ratingTextI + ratingText
+	}
+	return ratingTextI
+}
+
+
+module.exports.creatRating = creatRating
+module.exports.createListRating = createListRating

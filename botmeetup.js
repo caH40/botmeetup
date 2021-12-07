@@ -6,13 +6,12 @@ const keys = require('./app_modules/keyboards');// модуль клавиату
 const text = require('./app_modules/commands');// модуль текстовых сообщений
 const datain = require('./app_modules/datain');// модуль данных
 const creatLogErr = require('./app_modules/logerror');// модуль данных
-const ratingBd = require('./app_modules/ratingBd');
+const { creatRating, createListRating } = require('./app_modules/ratingBd');
 const getWeatherStart = require('./weather/getweatherstart');
 const getWeather = require('./weather/getweather');
 const logsMessagesChannel = require('./app_modules/logsMessagesChannel');
 const Message = require('./models/Message')
-const Rating = require('./models/Rating');
-const { stopCoverage } = require('v8');
+
 
 const bot = new Telegraf(process.env.BOT_TOKEN);
 
@@ -85,36 +84,25 @@ bot.command('rideon', async ctx => {
 		console.error(err);
 	};
 });
+// Запрос рейтинга вело организаторов
 bot.command('rating', async ctx => {
-	let ratingTextI = `Самые активные организаторы заездов:\n`
-	const contextParse = await Rating.find().sort({ posts: -1 })
-	for (let i = 0; i < contextParse.length; i++) {
-		let ratingText = `${i + 1}. ${contextParse[i].username}-${contextParse[i].posts} 🚴 \n`
-		ratingTextI = ratingTextI + ratingText
-	}
-	await ctx.reply(ratingTextI).catch((e) => console.log(e))
-
+	await ctx.reply(await createListRating()).catch((e) => console.log(e))
 });
 // создание инлайнклавиатуры keymyPosts массива со всеми созданными автором объявления
-// также создается массив из объектов объявлений автора keymyPosts
 bot.command('delete', async ctx => {
 	const regexp = RegExp('@' + ctx.update.message.from.username)
 	const messageFromBd = await Message.find({ "message.text": regexp })
-	// формируем инлайн клавиатуру из отфильтрованных элементов, вырезая необходимую информацию и значения message.text
-	let keymyPosts = [];
-	for (let i = 0; i < messageFromBd.length; i++) {
-		keymyPosts.push([{ text: messageFromBd[i].message.text.substring(33, 79).replace(/\n/g, '.'), callback_data: `ffmi${messageFromBd[i].message.forward_from_message_id}` }])
-	};
 	// проверяем есть ли записи в массиве myPost или нет
 	if ((typeof messageFromBd[0]) !== 'undefined') {
-		await ctx.reply('Какое объявление удаляем?', { reply_markup: { inline_keyboard: keymyPosts } }).catch((e) => console.log(e))
+		await ctx.reply('Какое объявление удаляем?', { reply_markup: { inline_keyboard: keys.keymyPost(messageFromBd) } })
+			.catch((e) => console.log(e))
 	}
 	else {
 		await ctx.reply('Ваших объявлений нет!').catch((e) => console.log(e))
 	}
 });
 //===================================================================================================
-// сохранение всех сообщений на каннале в mongodb
+// сохранение всех сообщений на канале в mongodb
 bot.on('message', async (ctx) => {
 	if (typeof ctx.update.message.forward_from_message_id !== 'undefined') {
 		logsMessagesChannel(ctx.message)
@@ -122,9 +110,11 @@ bot.on('message', async (ctx) => {
 
 	if (ctx.update.message.from.id === 777000) {
 		// отправляем голосование в группу дискуссий "прикрепляя" его к переадресованному сообщению reply_to_message_id
-		await ctx.telegram.sendPoll(process.env.GROUP_TELEGRAM, 'Кто участвует в заезде?', ['Участвую!', 'Не участвую!', 'Ищу возможность!'], { 'is_anonymous': false, 'correct_option_id': 0, 'reply_to_message_id': ctx.update.message.message_id }).catch((e) => console.log(e))
+		const messageIdPoll = await ctx.telegram.sendPoll(process.env.GROUP_TELEGRAM, 'Кто участвует в заезде?', ['Участвую!', 'Не участвую!', 'Ищу возможность!'], { 'is_anonymous': false, 'correct_option_id': 0, 'reply_to_message_id': ctx.update.message.message_id }).catch((e) => console.log(e))
 		// добавление сообщения о погоде в дискуссию о заезде
-		await ctx.telegram.sendMessage(process.env.GROUP_TELEGRAM, getWeatherStart(members.dateM, members.locationsM) ?? 'нет данных', { 'is_anonymous': false, 'correct_option_id': 0, 'reply_to_message_id': ctx.update.message.message_id, parse_mode: 'html' }).catch((e) => console.log(e))
+		const messageIdWeather = await ctx.telegram.sendMessage(process.env.GROUP_TELEGRAM, getWeatherStart(members.dateM, members.locationsM) ?? 'нет данных', { 'is_anonymous': false, 'correct_option_id': 0, 'reply_to_message_id': ctx.update.message.message_id, parse_mode: 'html' }).catch((e) => console.log(e))
+		console.log(messageIdPoll)
+		console.log(messageIdWeather)
 	}
 })
 //===================================================================================================
@@ -154,7 +144,6 @@ bot.on('callback_query', async (ctx) => {
 
 	const cbData = ctx.update.callback_query.data; // callback_data
 	await ctx.deleteMessage(ctx.update.callback_query.message.message_id).catch(e => creatLogErr(e)); // удаление меню инлайн клавиатуры после нажатия любой кнопки
-	// ctx.answerCbQuery(); // убираем иконку часов с инлайн кнопки, если вставить текст, по выводит в центре эрана телеграм
 	function handleQuery(callbackData, textTitle, keyboard) {
 		if (cbData === callbackData) {
 			ctx.reply(textTitle, { reply_markup: { inline_keyboard: keyboard } });
@@ -186,7 +175,7 @@ bot.on('callback_query', async (ctx) => {
 			members = ctx.session
 			await ctx.telegram.sendMessage(process.env.CHANNEL_TELEGRAM, meetStr, { parse_mode: 'html', disable_web_page_preview: true }).catch((e) => console.log(e));
 			// подсчет количества созданных объявлений
-			ratingBd(userName);
+			await creatRating(userName).catch((e) => console.log(e))
 			// сообщение о размещении объявления на канале
 			await ctx.reply(text.textPost).catch((e) => console.log(e));
 			//обнуление данных сессии

@@ -44,10 +44,19 @@ const level = [
 	[{ text: datain.levelArr[0], callback_data: datain.levelArr[0] }, { text: datain.levelArr[1], callback_data: datain.levelArr[1] }, { text: datain.levelArr[2], callback_data: datain.levelArr[2] }],
 	[{ text: datain.levelArr[3], callback_data: datain.levelArr[3] }, { text: datain.levelArr[4], callback_data: datain.levelArr[4] }, { text: datain.levelArr[5], callback_data: datain.levelArr[5] }]
 ];
-// своднны данных по заезду
+// сводные данных по заезду
 const summary = [[{ text: 'Опубликовать', callback_data: 'meetSend' }, { text: 'Редактировать', callback_data: 'meetEdit' }]];
 // для проверки заполнения ячеек
 const filled = [[{ text: 'Продолжить ввод данных', callback_data: 'meetEdit' }]];
+// формируем инлайн клавиатуру из отфильтрованных элементов, вырезая необходимую информацию и значения message.text
+function keymyPost(messageFromBd) {
+	let keymyPosts = [];
+	for (let i = 0; i < messageFromBd.length; i++) {
+		keymyPosts.push([{ text: messageFromBd[i].message.text.substring(33, 79).replace(/\n/g, '.'), callback_data: `ffmi${messageFromBd[i].message.forward_from_message_id}` }])
+	}
+	return keymyPosts
+}
+
 
 
 
@@ -60,3 +69,4 @@ module.exports.speed = speed;
 module.exports.level = level;
 module.exports.summary = summary;
 module.exports.filled = filled;
+module.exports.keymyPost = keymyPost;
