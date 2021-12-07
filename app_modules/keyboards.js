@@ -52,7 +52,7 @@ const filled = [[{ text: 'Продолжить ввод данных', callback_
 function keymyPost(messageFromBd) {
 	let keymyPosts = [];
 	for (let i = 0; i < messageFromBd.length; i++) {
-		keymyPosts.push([{ text: messageFromBd[i].message.text.substring(33, 79).replace(/\n/g, '.'), callback_data: `ffmi${messageFromBd[i].message.forward_from_message_id}` }])
+		keymyPosts.push([{ text: messageFromBd[i].messageChannel.text.substring(33, 79).replace(/\n/g, '.'), callback_data: `ffmi${messageFromBd[i].messageChannel.message_id}` }])
 	}
 	return keymyPosts
 }
