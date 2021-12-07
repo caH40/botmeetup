@@ -7,10 +7,12 @@ const text = require('./app_modules/commands');// модуль текстовы�
 const datain = require('./app_modules/datain');// модуль данных
 const creatLogErr = require('./app_modules/logerror');// модуль данных
 const pollCountUpdate = require('./app_modules/pollCount');// модуль данных
-const { creatRating, createListRating } = require('./app_modules/ratingBd');
+const { creatRating, createListRating } = require('./app_modules/ratingDb');
 const { logsMessagesChannel, updateMessage } = require('./app_modules/logsMessagesChannel');
 const getWeatherStart = require('./weather/getweatherstart');
-const getWeather = require('./weather/getweather');
+const getWeatherDb = require('./weather/getweatherDb');
+const weatherUpdate = require('./weather/weatherupdate');
+const WeatherWeek = require('./models/WeatherWeek')
 
 const Message = require('./models/Message')
 
@@ -28,27 +30,25 @@ mongoose.connect(process.env.MONGODB)
 
 bot.use(session())
 let members // переменная для сохранения данных сессии
+
 bot.catch((err, ctx) => {
 	console.log(`Ooops, encountered an error for ${ctx.updateType}`, err)
 })
-// контроль голосования option_ids: [ 0 ] первый ответ
-// не могу найти привязки между сообщениями в канале и голосованием в группе, поможет при формировании этих сообщений записывать дополнительный идентификатор к этим событиям
-bot.on('poll_answer', async ctx => {
 
+bot.on('poll_answer', async ctx => {
 	// обновление данных об количестве участников в БД, channel, group
 	pollCountUpdate(ctx)
 })
 
-// кнопка start
 bot.start(async (ctx) => {
 	const userName = ctx.update.message.from.username;
 	await ctx.reply(`Привет ${userName ? userName : 'незнакомец'} ! ${text.textStart}`, { parse_mode: 'html', disable_web_page_preview: true })
 });
+
 bot.help(async (ctx) => {
 	await ctx.reply(text.commands, { parse_mode: 'html', disable_web_page_preview: true })
 });
-// RideOn
-// для последовательного выполнения команд надо функцию делать асинхронной с помощью async/await
+
 bot.command('rideon', async ctx => {
 	try {
 		if (ctx.update.message.from.username) {
@@ -107,10 +107,10 @@ bot.on('message', async (ctx) => {
 		const messageIdPoll = await ctx.telegram.sendPoll(process.env.GROUP_TELEGRAM, 'Кто участвует в заезде?', ['Участвую!', 'Не участвую!', 'Ищу возможность!'], { 'is_anonymous': false, 'correct_option_id': 0, 'reply_to_message_id': ctx.update.message.message_id }).catch((e) => console.log(e))
 		// добавление сообщения о погоде в дискуссию о заезде
 		const messageIdWeather = await ctx.telegram.sendMessage(process.env.GROUP_TELEGRAM, getWeatherStart(members.dateM, members.locationsM) ?? 'нет данных', { 'is_anonymous': false, 'correct_option_id': 0, 'reply_to_message_id': ctx.update.message.message_id, parse_mode: 'html' }).catch((e) => console.log(e))
+
 		await updateMessage(messageIdPoll.reply_to_message.forward_from_message_id, messageIdPoll, messageIdWeather)
-
-
 	}
+	weatherUpdate(ctx)
 })
 //===================================================================================================
 // обработка всех нажатий инлайн кнопок
@@ -235,9 +235,9 @@ bot.on('callback_query', async (ctx) => {
 
 bot.launch();
 //получение данных о погоде
-setInterval(() => {
-	getWeather()
-}, 86400000);
+// setInterval(() => {
+// 	getWeatherDb()
+// }, 3600000);
 
 
 // Enable graceful stop
