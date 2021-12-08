@@ -107,7 +107,7 @@ bot.on('message', async (ctx) => {
 		// отправляем голосование в группу дискуссий "прикрепляя" его к переадресованному сообщению reply_to_message_id
 		const messageIdPoll = await ctx.telegram.sendPoll(process.env.GROUP_TELEGRAM, 'Кто участвует в заезде?', ['Участвую!', 'Не участвую!', 'Ищу возможность!'], { 'is_anonymous': false, 'correct_option_id': 0, 'reply_to_message_id': ctx.update.message.message_id }).catch((e) => console.log(e))
 		// добавление сообщения о погоде в дискуссию о заезде
-		const messageIdWeather = await ctx.telegram.sendMessage(process.env.GROUP_TELEGRAM, getWeatherStart(members.dateM, members.locationsM) ?? 'нет данных', { 'is_anonymous': false, 'correct_option_id': 0, 'reply_to_message_id': ctx.update.message.message_id, parse_mode: 'html' }).catch((e) => console.log(e))
+		const messageIdWeather = await ctx.telegram.sendMessage(process.env.GROUP_TELEGRAM, await getWeatherStart(members.dateM, members.locationsM) ?? 'нет данных', { 'is_anonymous': false, 'correct_option_id': 0, 'reply_to_message_id': ctx.update.message.message_id, parse_mode: 'html' }).catch((e) => console.log(e))
 
 		await updateMessage(messageIdPoll.reply_to_message.forward_from_message_id, messageIdPoll, messageIdWeather)
 	}
@@ -172,7 +172,6 @@ bot.on('callback_query', async (ctx) => {
 			await ctx.reply('Не все поля заполнены!!!', { reply_markup: { inline_keyboard: keys.filled } }).catch((e) => console.log(e));
 		} else {
 			members = ctx.session // используется для добавления данных о погоде
-
 			const messageChannel = await ctx.telegram.sendMessage(process.env.CHANNEL_TELEGRAM, meetStr, { parse_mode: 'html', disable_web_page_preview: true }).catch((e) => console.log(e));
 			// подсчет количества созданных объявлений
 			await creatRating(userName).catch((e) => console.log(e))
@@ -181,7 +180,7 @@ bot.on('callback_query', async (ctx) => {
 			//обнуление данных сессии
 			// ctx.session = {};
 			//запись в базу данных
-			logsMessagesChannel(messageChannel)
+			await logsMessagesChannel(messageChannel)
 		}
 	};
 	// редактирование создаваемого объявления
