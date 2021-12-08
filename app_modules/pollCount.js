@@ -3,12 +3,10 @@ const Message = require('../models/Message')
 async function pollCountUpdate(ctx) {
 	try {
 		if (ctx.update.poll_answer.option_ids[0] === 0) {
-
 			await Message.updateOne({ "messageGroupPoll.poll.id": ctx.update.poll_answer.poll_id }, { $inc: { pollCount: 1 } })
-			const pollId = await Message.findOne({ "messageGroupPoll.poll.id": ctx.update.poll_answer.poll_id })
-
-			await ctx.telegram.editMessageText(process.env.CHANNEL_TELEGRAM, pollId.messageChannel.message_id, 'привет!', pollId.messageChannel.text + `\n` + 'Участвуют: ' + pollId.pollCount + ' 🚵')
-
+			const currentPoll = await Message.findOne({ "messageGroupPoll.poll.id": ctx.update.poll_answer.poll_id })
+			const messageId = currentPoll.messageChannel.message_id
+			await ctx.telegram.editMessageText(process.env.CHANNEL_TELEGRAM, messageId, 'привет!', currentPoll.messageChannel.text + `\n` + 'Участвуют: ' + currentPoll.pollCount + ' 🚵')
 		}
 	} catch { err => console.log(err) }
 }

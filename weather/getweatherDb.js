@@ -3,13 +3,10 @@ const fetch = require('node-fetch');
 const cityList = require('./citylistru.json')
 const WeatherWeek = require('../models/WeatherWeek');
 
-
-
 const getWeatherDb = function () {
 	let i = 0
 	const cityMy = ['Kislovodsk', 'Pyatigorsk', 'Karachayevsk', 'Alagir', 'Arkhyz', 'Baksan', 'Nal’chik', 'Mineralnye Vody', 'Barashek', 'Yessentuki']
 	const arrayWeather = []
-
 
 	for (let x = 0; x < 10; x++) {
 
@@ -33,7 +30,6 @@ const getWeatherDb = function () {
 					const dayWeather = new Date(data.daily[i].dt * 1000).getDay();
 					const dayWeatherToday = new Date(data.daily[i].dt * 1000).toLocaleDateString();
 					const dateUpdate = new Date().toLocaleString();
-					let weatherDateRus = '';
 
 					const dayMyObj = {
 						1: 'Понедельник',
@@ -88,7 +84,6 @@ const getWeatherDb = function () {
 			}
 			)
 			.catch((err) => console.log('Fetch - ' + err))
-		// .catch((err) => logerror('Fetch - ' + err))
 	};
 }
 // writeCurrentWeather()
