@@ -75,7 +75,7 @@ const getWeatherDb = function () {
 					arrayWeather.push(zap)
 				}
 				//обновление данных о погоде в базе данных, если нет, то создает новую коллекцию
-				const mda = async () => {
+				const week = async () => {
 					const savedWeather = await WeatherWeek.findOne()
 					if (savedWeather) {
 						await WeatherWeek.findByIdAndUpdate(savedWeather.id, { list: arrayWeather })
@@ -84,7 +84,7 @@ const getWeatherDb = function () {
 						week.save()
 					}
 				}
-				mda()
+				week()
 			}
 			)
 			.catch((err) => console.log('Fetch - ' + err))

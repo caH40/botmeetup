@@ -14,7 +14,8 @@ const getWeatherDb = require('./weather/getweatherDb');
 const weatherUpdate = require('./weather/weatherupdate');
 const WeatherWeek = require('./models/WeatherWeek')
 
-const Message = require('./models/Message')
+const Message = require('./models/Message');
+const { setTimeout } = require('timers');
 
 
 const bot = new Telegraf(process.env.BOT_TOKEN);
@@ -110,7 +111,10 @@ bot.on('message', async (ctx) => {
 
 		await updateMessage(messageIdPoll.reply_to_message.forward_from_message_id, messageIdPoll, messageIdWeather)
 	}
-	weatherUpdate(ctx)
+	setInterval(() => {
+		weatherUpdate(ctx)
+	}, 180000)
+
 })
 //===================================================================================================
 // обработка всех нажатий инлайн кнопок
@@ -235,9 +239,9 @@ bot.on('callback_query', async (ctx) => {
 
 bot.launch();
 //получение данных о погоде
-// setInterval(() => {
-// 	getWeatherDb()
-// }, 3600000);
+setInterval(() => {
+	getWeatherDb()
+}, 3600000);
 
 
 // Enable graceful stop
