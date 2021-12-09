@@ -9,7 +9,7 @@ async function getWeatherStart(date, location) {
 		current ??= []
 		current.desc ??= 'Предсказываю погоду на более близкие даты...'
 		current.desc = current.desc.charAt(0).toUpperCase() + current.desc.slice(1)
-		return `<b>Температура утром</b>: ${current.tempMorn ?? '---'}°C\n<b>Температура днём</b>: ${current.tempDay ?? '---'}°C\n<b>Температура вечером</b>: ${current.tempEve ?? '---'}°C\n<b>Влажность</b>: ${current.humidity ?? '---'}%\n<b>Скорость ветра</b>: ${current.windSpeed ?? '---'}м/с\n<b>${current.desc ?? '---'}</b>`
+		return `Температура утром: ${current.tempMorn ?? '---'}°C\nТемпература днём: ${current.tempDay ?? '---'}°C\nТемпература вечером: ${current.tempEve ?? '---'}°C\nВлажность: ${current.humidity ?? '---'}%\nСкорость ветра: ${current.windSpeed ?? '---'}м/с\n${current.desc ?? '---'}`
 	} catch { err => console.log(err) }
 }
 

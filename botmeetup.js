@@ -2,7 +2,6 @@ require('dotenv').config();
 const { Telegraf, session } = require('telegraf');
 const mongoose = require('mongoose');
 
-const keys = require('./app_modules/keyboards');// модуль клавиатур
 const {
 	getKeyboardForDelPost,
 	getKeyboardDays,
@@ -27,7 +26,7 @@ const { creatRating, createListRating } = require('./app_modules/ratingDb');
 const { logsMessagesChannel, updateMessage } = require('./app_modules/logsMessagesChannel');
 
 
-
+const millisecondsInHour = 3600000
 const bot = new Telegraf(process.env.BOT_TOKEN);
 // подключение к базе данных
 mongoose.connect(process.env.MONGODB)
@@ -122,7 +121,7 @@ bot.on('message', async (ctx) => {
 		if (ctx.update.message.from.id === idMainTelegram) {
 			// отправляем голосование в группу дискуссий "прикрепляя" его к переадресованному сообщению reply_to_message_id
 			const pollAnswers = ['Участвую!', 'Не участвую!', 'Ищу возможность!']
-			const optionalOptions = { 'is_anonymous': false, 'correct_option_id': 0, 'reply_to_message_id': ctx.update.message.message_id, parse_mode: 'html' }
+			const optionalOptions = { 'is_anonymous': false, 'correct_option_id': 0, 'reply_to_message_id': ctx.update.message.message_id }
 			// добавление голосования кто участвует в заезде в дискуссию о заезде
 			const messageIdPoll = await ctx.telegram.sendPoll(process.env.GROUP_TELEGRAM, 'Кто участвует в заезде?', pollAnswers, optionalOptions)
 			// добавление сообщения о погоде в дискуссию о заезде
@@ -133,10 +132,9 @@ bot.on('message', async (ctx) => {
 		console.log(error)
 	}
 
-	const millisecondsInHalfHour = 1800000
 	setInterval(() => {
 		weatherUpdate(ctx)
-	}, millisecondsInHalfHour)
+	}, millisecondsInHour)
 
 })
 //===================================================================================================
@@ -146,7 +144,7 @@ bot.on('callback_query', async (ctx) => {
 	ctx.session.start ??= keyboardMain
 	ctx.session.creatM = '@' + userName;
 	//итоговое объявление о заезде
-	const meetStr = `<b>Данные о планируемом велозаезде</b>:\n<b>Дата</b>: ${ctx.session.dateM ?? '---'}\n<b>Время</b>: ${ctx.session.timeM ?? '---'}\n<b>Место</b>: ${ctx.session.locationsM ?? '---'}\n<b>Дистанция</b>: ${ctx.session.distanceM ?? '---'} \n<b>Tемп</b>: ${ctx.session.speedM ?? '---'}\n<b>Сложность</b>: ${ctx.session.levelM ?? '---'}\n<b>Организатор заезда</b>: ${ctx.session.creatM}`;
+	const meetStr = `Данные о планируемом велозаезде:\nДата: ${ctx.session.dateM ?? '---'}\nВремя: ${ctx.session.timeM ?? '---'}\nМесто: ${ctx.session.locationsM ?? '---'}\nДистанция: ${ctx.session.distanceM ?? '---'} \nTемп: ${ctx.session.speedM ?? '---'}\nСложность: ${ctx.session.levelM ?? '---'}\nОрганизатор заезда: ${ctx.session.creatM}`;
 
 	const cbData = ctx.update.callback_query.data; // callback_data
 	await ctx.deleteMessage(ctx.update.callback_query.message.message_id).catch((error) => creatLogErr(error)); // удаление меню инлайн клавиатуры после нажатия любой кнопки
@@ -183,7 +181,7 @@ bot.on('callback_query', async (ctx) => {
 				await ctx.reply('Не все поля заполнены!!!', { reply_markup: { inline_keyboard: keyboardBack } })
 			} else {
 				members = ctx.session // используется для добавления данных о погоде
-				const messageChannel = await ctx.telegram.sendMessage(process.env.CHANNEL_TELEGRAM, meetStr, { parse_mode: 'html', disable_web_page_preview: true })
+				const messageChannel = await ctx.telegram.sendMessage(process.env.CHANNEL_TELEGRAM, meetStr, { disable_web_page_preview: true })
 				// подсчет количества созданных объявлений
 				await creatRating(userName)
 				// сообщение о размещении объявления на канале
@@ -250,7 +248,6 @@ bot.on('callback_query', async (ctx) => {
 
 bot.launch();
 //получение данных о погоде
-const millisecondsInHour = 3600000
 setInterval(() => {
 	getWeatherDb()
 }, millisecondsInHour);
