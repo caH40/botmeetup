@@ -8,7 +8,7 @@ async function pollCountUpdate(ctx) {
 			const messageId = currentPoll.messageChannel.message_id
 			await ctx.telegram.editMessageText(process.env.CHANNEL_TELEGRAM, messageId, 'привет!', currentPoll.messageChannel.text + `\n` + 'Участвуют: ' + currentPoll.pollCount + ' 🚵', { parse_mode: 'html' })
 		}
-	} catch { err => console.log(err) }
+	} catch { (error) => console.log(error) }
 }
 
 module.exports = pollCountUpdate

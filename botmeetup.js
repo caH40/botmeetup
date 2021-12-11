@@ -21,6 +21,7 @@ const pollCountUpdate = require('./app_modules/pollcount');// модуль да�
 const getWeatherStart = require('./weather/getweatherstart');
 const getWeatherDb = require('./weather/getweatherDb');
 const weatherUpdate = require('./weather/weatherupdate');
+const deletePost = require('./app_modules/deletepost');
 const Message = require('./models/Message');
 const { creatRating, createListRating } = require('./app_modules/ratingDb');
 const { logsMessagesChannel, updateMessage } = require('./app_modules/logsMessagesChannel');
@@ -96,16 +97,16 @@ bot.command('rideon', async ctx => {
 });
 // Запрос рейтинга вело организаторов
 bot.command('rating', async ctx => {
-	await ctx.reply(await createListRating()).catch((e) => console.log(e))
+	await ctx.reply(await createListRating()).catch((error) => console.log(error))
 });
 // создание инлайнклавиатуры getKeyboardForDelPost массива со всеми созданными автором объявления
 bot.command('delete', async ctx => {
 	try {
 		const regexp = RegExp('@' + ctx.update.message.from.username)
-		const messageFromBd = await Message.find({ "message.text": regexp })
+		const messageFromDb = await Message.find({ "message.text": regexp })
 		// проверяем есть ли записи в массиве getKeyboardForDelPost или нет
-		if (messageFromBd[0]) {
-			await ctx.reply('Какое объявление удаляем?', { reply_markup: { inline_keyboard: getKeyboardForDelPost(messageFromBd) } })
+		if (messageFromDb[0]) {
+			await ctx.reply('Какое объявление удаляем?', { reply_markup: { inline_keyboard: getKeyboardForDelPost(messageFromDb) } })
 		}
 		else {
 			await ctx.reply('Ваших объявлений нет!')
@@ -195,7 +196,7 @@ bot.on('callback_query', async (ctx) => {
 
 	};
 	async function output() {
-		await ctx.reply('Выберите блок заполнения', { reply_markup: { inline_keyboard: ctx.session.start } }).catch((e) => console.log(e))
+		await ctx.reply('Выберите блок заполнения', { reply_markup: { inline_keyboard: ctx.session.start } }).catch((error) => console.log(error))
 	}
 	// редактирование создаваемого объявления
 	if (cbData === 'meetEdit') {
@@ -234,15 +235,7 @@ bot.on('callback_query', async (ctx) => {
 	};
 	// блок удаления автором ненужных объявлений с канала объявлений
 	if (cbData.includes('ffmi')) {
-		try {
-			const forwardMess = cbData.replace(/ffmi/g, ''); //чистим callback_data от служебных символов ffmi
-			await ctx.telegram.editMessageText(process.env.CHANNEL_TELEGRAM, forwardMess, 'привет!', 'Объявление не актуально! Удалено автором поста.')
-			//база данных ждет forwardMess в формате Number
-			await Message.deleteOne({ "message.forward_from_message_id": +forwardMess })
-			await ctx.reply('Ваше объявление удалено!')
-		} catch (error) {
-			console.log(error)
-		}
+		await deletePost(cbData, ctx).catch((error) => console.log(error))
 	};
 });
 
