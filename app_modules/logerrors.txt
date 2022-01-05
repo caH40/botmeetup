@@ -6,3 +6,4 @@
 06.12.2021, 10:22:40: Error: 400: Bad Request: message is not modified: specified new message content and reply markup are exactly the same as a current content and reply markup of the message,
 06.12.2021, 10:23:15: Error: 400: Bad Request: message is not modified: specified new message content and reply markup are exactly the same as a current content and reply markup of the message,
 08.12.2021, 22:41:20: Error: 400: Bad Request: message is not modified: specified new message content and reply markup are exactly the same as a current content and reply markup of the message,
+15.12.2021, 20:52:08: Error: 400: Bad Request: message can't be deleted,

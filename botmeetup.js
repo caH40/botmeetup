@@ -13,11 +13,11 @@ const {
 	keyboardDistances,
 	keyboardSpeed,
 	keyboardDifficulty
-} = require('./app_modules/keyboards');// модуль клавиатур
-const text = require('./app_modules/commands');// модуль текстовых сообщений
-const datain = require('./app_modules/datain');// модуль данных
-const creatLogErr = require('./app_modules/logerror');// модуль данных
-const pollCountUpdate = require('./app_modules/pollcount');// модуль данных
+} = require('./app_modules/keyboards');
+const text = require('./app_modules/commands');
+const datain = require('./app_modules/datain');
+const creatLogErr = require('./app_modules/logerror');
+const pollCountUpdate = require('./app_modules/pollcount');
 const getWeatherStart = require('./weather/getweatherstart');
 const getWeatherDb = require('./weather/getweatherDb');
 const weatherUpdate = require('./weather/weatherupdate');
@@ -103,7 +103,8 @@ bot.command('rating', async ctx => {
 bot.command('delete', async ctx => {
 	try {
 		const regexp = RegExp('@' + ctx.update.message.from.username)
-		const messageFromDb = await Message.find({ "message.text": regexp })
+		console.log(regexp);
+		const messageFromDb = await Message.find({ "messageChannel.text": regexp })
 		// проверяем есть ли записи в массиве getKeyboardForDelPost или нет
 		if (messageFromDb[0]) {
 			await ctx.reply('Какое объявление удаляем?', { reply_markup: { inline_keyboard: getKeyboardForDelPost(messageFromDb) } })
@@ -115,8 +116,12 @@ bot.command('delete', async ctx => {
 		console.log(error)
 	}
 });
+// bot.on('edited_message', async ctx => {
+// 	console.log(ctx.update)
+// })
 // сохранение всех сообщений на канале в mongodb
 bot.on('message', async (ctx) => {
+	// console.log(ctx.message)
 	try {
 		const idMainTelegram = 777000
 		if (ctx.update.message.from.id === idMainTelegram) {
@@ -128,14 +133,16 @@ bot.on('message', async (ctx) => {
 			// добавление сообщения о погоде в дискуссию о заезде
 			const messageIdWeather = await ctx.telegram.sendMessage(process.env.GROUP_TELEGRAM, await getWeatherStart(members.dateM, members.locationsM) ?? 'нет данных', optionalOptions)
 			await updateMessage(messageIdPoll.reply_to_message.forward_from_message_id, messageIdPoll, messageIdWeather)
+			//запуск таймера обновления данных о погоде в день старта заезда
+			setInterval(() => {
+				weatherUpdate(ctx)
+			}, millisecondsInHour)
 		}
 	} catch (error) {
 		console.log(error)
 	}
 
-	setInterval(() => {
-		weatherUpdate(ctx)
-	}, millisecondsInHour)
+
 
 })
 //===================================================================================================
@@ -150,9 +157,9 @@ bot.on('callback_query', async (ctx) => {
 	const cbData = ctx.update.callback_query.data; // callback_data
 	await ctx.deleteMessage(ctx.update.callback_query.message.message_id).catch((error) => creatLogErr(error)); // удаление меню инлайн клавиатуры после нажатия любой кнопки
 
-	function handleQuery(callbackData, textTitle, keyboard) {
+	async function handleQuery(callbackData, textTitle, keyboard) {
 		if (cbData === callbackData) {
-			ctx.reply(textTitle, { reply_markup: { inline_keyboard: keyboard } })
+			await ctx.reply(textTitle, { reply_markup: { inline_keyboard: keyboard } })
 		}
 	}
 
@@ -169,7 +176,6 @@ bot.on('callback_query', async (ctx) => {
 	// вывод меню сложности
 	handleQuery('meetLevel', 'Уровень сложности заезда', keyboardDifficulty);
 	// вывод меню сводных данных по заезду, публикация или редактирование
-
 	if (cbData === 'meetSummary') {
 		await ctx.replyWithHTML(meetStr, { reply_markup: { inline_keyboard: keyboardSummary } }).catch((error) => console.log(error))
 	};
