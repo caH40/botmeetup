@@ -103,7 +103,6 @@ bot.command('rating', async ctx => {
 bot.command('delete', async ctx => {
 	try {
 		const regexp = RegExp('@' + ctx.update.message.from.username)
-		console.log(regexp);
 		const messageFromDb = await Message.find({ "messageChannel.text": regexp })
 		// проверяем есть ли записи в массиве getKeyboardForDelPost или нет
 		if (messageFromDb[0]) {

@@ -13,7 +13,7 @@ const getWeatherDb = function () {
 		let lon = cityList.filter(obj => obj.name === cityMy[x])[0].coord.lon
 		let lat = cityList.filter(obj => obj.name === cityMy[x])[0].coord.lat
 
-		const requestUrl = `https://api.openweathermap.org/data/2.5/onecall?lat=${lat}&lon=${lon}&appid=${process.env.IDWEATHER}=hourly&units=metric&lang=ru`
+		const requestUrl = `https://api.openweathermap.org/data/2.5/onecall?lat=${lat}&lon=${lon}&appid=${process.env.IDWEATHER}&exclude=hourly&units=metric&lang=ru`
 		fetch(requestUrl)
 			.then(function (resp) {
 				return resp.json()
@@ -86,5 +86,4 @@ const getWeatherDb = function () {
 			.catch((err) => console.log('Fetch - ' + err))
 	};
 }
-// writeCurrentWeather()
 module.exports = getWeatherDb
