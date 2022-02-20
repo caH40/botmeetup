@@ -27,7 +27,7 @@ const { creatRating, createListRating } = require('./app_modules/ratingDb');
 const { logsMessagesChannel, updateMessage } = require('./app_modules/logsMessagesChannel');
 
 
-const millisecondsInHour = 3600000
+const millisecondsInHour = 3600000;
 const bot = new Telegraf(process.env.BOT_TOKEN);
 // подключение к базе данных
 mongoose.connect(process.env.MONGODB)
@@ -134,10 +134,6 @@ bot.on('message', async (ctx) => {
 			let dateClear = members.dateM.slice(5);
 			const messageIdWeather = await ctx.telegram.sendMessage(process.env.GROUP_TELEGRAM, await getWeatherStart(dateClear, members.locationsM) ?? 'нет данных', optionalOptions)
 			await updateMessage(messageIdPoll.reply_to_message.forward_from_message_id, messageIdPoll, messageIdWeather)
-			//запуск таймера обновления данных о погоде в день старта заезда
-			setInterval(() => {
-				weatherUpdate(ctx)
-			}, millisecondsInHour)
 		}
 	} catch (error) {
 		console.log(error)
@@ -246,11 +242,16 @@ bot.on('callback_query', async (ctx) => {
 	};
 });
 
-bot.launch();
-//получение данных о погоде
-setInterval(() => {
-	getWeatherDb()
-}, millisecondsInHour);
+bot.launch()
+	.then(async () => {
+		await bot.telegram.sendMessage(process.env.MY_TELEGRAM_ID, 'restart...');
+		setInterval(() => {
+			//запуск таймера обновления данных о погоде в день старта заезда
+			getWeatherDb();
+			//получение данных о погоде
+			weatherUpdate(bot);
+		}, millisecondsInHour)
+	})
 
 
 // Enable graceful stop
