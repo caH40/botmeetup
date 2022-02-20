@@ -18,9 +18,10 @@ const keyboardMain = [
 	]
 ];
 function getKeyboardDays() {
-	let date = []
-	for (let i = 0; i < 10; i = i + 2) {
-		date.push([{ text: datain.creatDayArr()[i], callback_data: datain.creatDayArr()[i] }, { text: datain.creatDayArr()[i + 1], callback_data: datain.creatDayArr()[i + 1] }])
+	let date = [];
+	const days = datain.creatDayArr();
+	for (let i = 0; i < 12; i = i + 2) {
+		date.push([{ text: days[i], callback_data: days[i] }, { text: days[i + 1], callback_data: days[i + 1] }])
 	}
 	return date
 };

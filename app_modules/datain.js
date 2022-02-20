@@ -4,9 +4,19 @@ const dateSecToday = () => { return new Date().getTime() }; // сегодняш�
 // создаем массив из 10 дней начиная с сегодняшнего дня
 
 const creatDayArr = () => {
-	const dayArr = [new Date().toLocaleDateString()]; //toLocaleDateString() приводит вид даты в стандартный вид дд.мм.гггг
-	for (let i = 1; i < 10; i++) {
-		dayArr.push(new Date(dateSecToday() + daySec * i).toLocaleDateString());
+	var dayArr = []; //toLocaleDateString() приводит вид даты в стандартный вид дд.мм.гггг
+	const days = {
+		0: 'Вс.',
+		1: 'Пн.',
+		2: 'Вт.',
+		3: 'Ср.',
+		4: 'Чт.',
+		5: 'Пт.',
+		6: 'Сб.'
+	};
+	for (let i = 0; i < 12; i++) {
+		let currentDay = new Date(dateSecToday() + daySec * i);
+		dayArr.push(days[currentDay.getDay()] + ', ' + currentDay.toLocaleDateString());
 	};
 	return dayArr
 };

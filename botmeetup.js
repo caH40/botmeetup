@@ -63,6 +63,7 @@ bot.help(async (ctx) => {
 
 bot.command('rideon', async ctx => {
 	try {
+		// проверка наличия username
 		if (ctx.update.message.from.username) {
 			// обнуление сессии
 			members = {}
