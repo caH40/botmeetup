@@ -131,7 +131,8 @@ bot.on('message', async (ctx) => {
 			// добавление голосования кто участвует в заезде в дискуссию о заезде
 			const messageIdPoll = await ctx.telegram.sendPoll(process.env.GROUP_TELEGRAM, 'Кто участвует в заезде?', pollAnswers, optionalOptions)
 			// добавление сообщения о погоде в дискуссию о заезде
-			const messageIdWeather = await ctx.telegram.sendMessage(process.env.GROUP_TELEGRAM, await getWeatherStart(members.dateM, members.locationsM) ?? 'нет данных', optionalOptions)
+			let dateClear = members.dateM.slice(5);
+			const messageIdWeather = await ctx.telegram.sendMessage(process.env.GROUP_TELEGRAM, await getWeatherStart(dateClear, members.locationsM) ?? 'нет данных', optionalOptions)
 			await updateMessage(messageIdPoll.reply_to_message.forward_from_message_id, messageIdPoll, messageIdWeather)
 			//запуск таймера обновления данных о погоде в день старта заезда
 			setInterval(() => {
