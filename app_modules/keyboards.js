@@ -53,7 +53,9 @@ const keyboardBack = [[{ text: 'Продолжить ввод данных', cal
 function getKeyboardForDelPost(messageFromDb) {
 	let keyboardForDelPost = [];
 	for (let i = 0; i < messageFromDb.length; i++) {
-		keyboardForDelPost.push([{ text: messageFromDb[i].messageChannel.text.substring(33, 79).replace(/\n/g, '.'), callback_data: `ffmi${messageFromDb[i].messageChannel.message_id}` }])
+		let clearMessage = messageFromDb[i].messageChannel.text;
+		clearMessage = clearMessage.match(/\d{1,2}.\d\d.\d\d\d\d/) + ', ' + clearMessage.match(/\d{1,2}:\d\d/) + ', ' + clearMessage.match(/Место: ([^\n]*)/)[1] + ', ' + clearMessage.match(/Дистанция: ([^\n]*)/)[1]
+		keyboardForDelPost.push([{ text: clearMessage, callback_data: `ffmi${messageFromDb[i].messageChannel.message_id}` }])
 	}
 	return keyboardForDelPost
 }
