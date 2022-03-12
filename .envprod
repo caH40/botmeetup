@@ -1,0 +1,8 @@
+//for prod
+BOT_TOKEN=2052008440:AAEqQYnRzP294IuH0-DcSIPwbjvcwybTUTc
+GROUP_TELEGRAM=-1001733408404
+CHANNEL_TELEGRAM=@meetupkmv
+//MONGODB=mongodb://localhost:27017/botmeetup
+MONGODB=mongodb://GjerT34opKin:3W*ih-Phqe'mKjx@62.113.96.127:23177/botmeetup?authSource=admin&readPreference=primary&appname=MongoDB%20Compass&ssl=false
+IDWEATHER=2b149698008867fabba93ac5e856e71e
+MY_TELEGRAM_ID=412801722

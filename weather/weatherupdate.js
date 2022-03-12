@@ -4,7 +4,8 @@ const getWeatherStart = require('./getweatherstart')
 
 async function weatherUpdate(bot) {
 	try {
-		const messageObj = await Message.find()
+		const messageObj = await Message.find();
+
 		messageObj.forEach(async elm => {
 			const date = elm.messageChannel.text.match(/[0-9][0-9]\.[0-9][0-9]\.[0-9][0-9][0-9][0-9]/gm)[0];
 			const location = elm.messageChannel.text.slice((elm.messageChannel.text.indexOf('Место: ') + 7), elm.messageChannel.text.indexOf('Дистанция:') - 1);
